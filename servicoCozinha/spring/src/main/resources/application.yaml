@@ -1,0 +1,40 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: servico-cozinha
+
+  datasource:
+    url: jdbc:h2:mem:cozinhadb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # use o MESMO RabbitMQ do servicoPedido (as filas sao o contrato entre os dois).
+  # Usuario e senha vem de variaveis de ambiente: nao grave credenciais no repositorio.
+  rabbitmq:
+    host: jackal.rmq.cloudamqp.com
+    port: 5671
+    username: ktdyotmj
+    password: lMOCkDPn0_EXn3gMQc_yE1Oa3xsp2QpJ
+    virtual-host: ktdyotmj
+    ssl:
+      enabled: true
+
+app:
+  mensageria:
+    # false = nao usa RabbitMQ: os pedidos entram por POST /cozinha/pedidos e os avisos so aparecem no log
+    #         -> da para testar o servicoCozinha sozinho.
+    # true  = escuta pedido-criado / pedido-cancelado e publica pedido-status-cozinha.
+    habilitada: "${MENSAGERIA_HABILITADA:true}"

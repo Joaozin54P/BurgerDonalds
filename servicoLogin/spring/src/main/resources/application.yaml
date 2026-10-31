@@ -1,0 +1,45 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: servico-login
+
+  datasource:
+    url: jdbc:h2:mem:logindb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+app:
+  jwt:
+    # TODOS os servicos usam o mesmo segredo (o servicoLogin emite, os outros validam)
+    secret: "G7vQ2mX9kL4pN8sR1dF6wT3yH0cJ5zA8uE2bV7nM9qS4xK6rP1tW8yD3fL0gC5"
+    expiration-ms: 7200000
+  # cookie HttpOnly que carrega o token (o gateway le este mesmo cookie)
+  cookie:
+    name: "${COOKIE_NAME:token}"
+    # true em producao (HTTPS). Em http://localhost precisa ser false, senao o navegador descarta o cookie
+    secure: "${COOKIE_SECURE:false}"
+    # Lax: front e gateway no mesmo "site" (ex: localhost:8081 e localhost:8080).
+    # Se ficarem em dominios diferentes use None (e secure=true)
+    same-site: "${COOKIE_SAMESITE:Lax}"
+  # usuarios criados automaticamente quando o servico sobe
+  admin:
+    nome: "Administrador"
+    email: "admin@lanchonete.com"
+    senha: "admin123"
+  cozinha:
+    nome: "Cozinha"
+    email: "cozinha@lanchonete.com"
+    senha: "cozinha123"

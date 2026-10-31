@@ -1,0 +1,50 @@
+### Requisicoes para testar o servicoLogin (IntelliJ: clique no botao verde ao lado de cada uma)
+### O servico precisa estar rodando em http://localhost:8085
+
+### 1) Login como ADMIN (usuario criado automaticamente) -> guarda o token na variavel {{admin}}
+POST http://localhost:8085/auth/login
+Content-Type: application/json
+
+{ "email": "admin@lanchonete.com", "senha": "admin123" }
+
+> {% client.global.set("admin", response.body.token); %}
+
+### 2) Cadastro publico (sempre vira CLIENTE)
+POST http://localhost:8085/auth/registrar
+Content-Type: application/json
+
+{ "nome": "Ana", "email": "ana@x.com", "senha": "123" }
+
+### 3) Login da Ana -> guarda o token na variavel {{ana}}
+POST http://localhost:8085/auth/login
+Content-Type: application/json
+
+{ "email": "ana@x.com", "senha": "123" }
+
+> {% client.global.set("ana", response.body.token); %}
+
+### 4) ADMIN cria um funcionario da cozinha (perfil: CLIENTE, COZINHA ou ADMIN)
+POST http://localhost:8085/auth/usuarios
+Authorization: Bearer {{admin}}
+Content-Type: application/json
+
+{ "nome": "Joao Cozinha", "email": "joao@lanchonete.com", "senha": "123", "perfil": "COZINHA" }
+
+### 5) A Ana (CLIENTE) tenta criar usuario -> tem que dar 403
+POST http://localhost:8085/auth/usuarios
+Authorization: Bearer {{ana}}
+Content-Type: application/json
+
+{ "nome": "Hacker", "email": "h@x.com", "senha": "1", "perfil": "ADMIN" }
+
+### 6) Sem token -> tem que dar 401
+POST http://localhost:8085/auth/usuarios
+Content-Type: application/json
+
+{ "nome": "X", "email": "x@x.com", "senha": "1", "perfil": "ADMIN" }
+
+### 7) Senha errada -> 401 {"erro":"Email ou senha invalidos"}
+POST http://localhost:8085/auth/login
+Content-Type: application/json
+
+{ "email": "ana@x.com", "senha": "errada" }

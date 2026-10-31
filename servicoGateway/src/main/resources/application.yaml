@@ -1,0 +1,55 @@
+server:
+  port: ${GATEWAY_PORT:8080}
+
+spring:
+  application:
+    name: gateway
+
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: servico-login
+              uri: ${LOGIN_URL:http://localhost:8085}
+              predicates:
+                - Path=/auth/**
+
+            - id: servico-cardapio-categorias
+              uri: ${CARDAPIO_URL:http://localhost:8082}
+              predicates:
+                - Path=/categorias/**
+
+            - id: servico-cardapio-produtos
+              uri: ${CARDAPIO_URL:http://localhost:8082}
+              predicates:
+                - Path=/produtos/**
+
+            - id: servico-cardapio-adicionais
+              uri: ${CARDAPIO_URL:http://localhost:8082}
+              predicates:
+                - Path=/adicionais/**
+
+            - id: servico-pedido
+              uri: ${PEDIDO_URL:http://localhost:8083}
+              predicates:
+                - Path=/pedidos/**
+
+            - id: servico-cozinha
+              uri: ${COZINHA_URL:http://localhost:8084}
+              predicates:
+                - Path=/cozinha/**
+
+app:
+  jwt:
+    # mesmo segredo do servicoLogin (ele emite o token, o gateway valida)
+    secret: ${JWT_SECRET:G7vQ2mX9kL4pN8sR1dF6wT3yH0cJ5zA8uE2bV7nM9qS4xK6rP1tW8yD3fL0gC5}
+  cookie:
+    # nome do cookie HttpOnly que o servicoLogin cria (precisa ser igual nos dois)
+    name: ${COOKIE_NAME:token}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
