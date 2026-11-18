@@ -1,0 +1,96 @@
+# Nome que aparece na aba Actions do GitHub
+name: CI/CD - BurgerDonalds (GraalVM)
+
+# Gatilho: todo push na branch main executa a pipeline
+# (workflow_dispatch permite rodar manualmente pelo botão "Run workflow")
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Permissão somente de leitura no conteúdo do repositório
+permissions:
+  contents: read
+
+env:
+  IMAGE_PREFIX: burgerdonalds # as imagens ficam burgerdonalds-gateway, burgerdonalds-login...
+
+jobs:
+  # ---------------------------------------------------------------
+  # JOB 1: build -> uma imagem para cada microserviço (matrix)
+  # ---------------------------------------------------------------
+  build:
+    name: Build ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { service: gateway,  dir: servicoGateway }
+          - { service: login,    dir: servicoLogin }
+          - { service: cardapio, dir: servicoCardapio }
+          - { service: pedido,   dir: servicoPedido }
+          - { service: cozinha,  dir: servicoCozinha }
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Login no Docker Hub com secrets (valores criptografados do GitHub)
+      - name: Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Build pelo Dockerfile do serviço (imagem GraalVM 21), em amd64, com push ao Docker Hub
+      - name: Build e push da imagem
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.dir }}
+          file: ./${{ matrix.dir }}/Dockerfile
+          platforms: linux/amd64
+          push: true
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:${{ github.sha }}
+
+  # ---------------------------------------------------------------
+  # JOB 2: deploy -> arquivo com a data e deploy hook de cada serviço no Render
+  # ---------------------------------------------------------------
+  deploy:
+    name: Deploy no Render
+    runs-on: ubuntu-latest
+    needs: build # só roda se todos os builds deram certo
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Gerar arquivo de deploy com data atual
+        run: |
+          echo "Projeto: BurgerDonalds" > deploy-info.txt
+          echo "Commit: ${{ github.sha }}" >> deploy-info.txt
+          echo "Imagens: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_PREFIX }}-{gateway,login,cardapio,pedido,cozinha}:${{ github.sha }}" >> deploy-info.txt
+          echo "Data do deploy: $(date '+%d/%m/%Y %H:%M:%S %Z')" >> deploy-info.txt
+          cat deploy-info.txt
+
+      - name: Publicar deploy-info.txt como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-info
+          path: deploy-info.txt
+
+      # Cada serviço tem o seu Deploy Hook no Render
+      - name: Disparar deploy no Render (todos os serviços)
+        run: |
+          curl --fail -X POST "${{ secrets.RENDER_HOOK_LOGIN }}"
+          curl --fail -X POST "${{ secrets.RENDER_HOOK_CARDAPIO }}"
+          curl --fail -X POST "${{ secrets.RENDER_HOOK_COZINHA }}"
+          curl --fail -X POST "${{ secrets.RENDER_HOOK_PEDIDO }}"
+          curl --fail -X POST "${{ secrets.RENDER_HOOK_GATEWAY }}"
