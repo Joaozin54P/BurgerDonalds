@@ -10,7 +10,7 @@ RUN microdnf install -y tar gzip && \
 ENV PATH="/opt/maven/bin:${PATH}"
 
 COPY . .
-RUN mvn -B -q -DskipTests package
+RUN mvn -B -q -Dmaven.test.skip=true package
 
 # ---------- Estágio 2: runtime GraalVM ----------
 FROM ghcr.io/graalvm/jdk-community:21
