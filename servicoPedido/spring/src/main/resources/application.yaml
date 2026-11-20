@@ -24,11 +24,20 @@ spring:
   rabbitmq:
     host: jackal.rmq.cloudamqp.com
     port: 5671
-    username: ktdyotmj
-    password: lMOCkDPn0_EXn3gMQc_yE1Oa3xsp2QpJ
-    virtual-host: ktdyotmj
+    username: ${RABBITMQ_USERNAME:ktdyotmj}
+    password: ${RABBITMQ_PASSWORD:lMOCkDPn0_EXn3gMQc_yE1Oa3xsp2QpJ}
+    virtual-host: ${RABBITMQ_VHOST:ktdyotmj}
     ssl:
       enabled: true
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 2000ms
+          max-attempts: 3
+          multiplier: 2.0
+          max-interval: 10000ms
+        default-requeue-rejected: false
 
 app:
   mensageria:

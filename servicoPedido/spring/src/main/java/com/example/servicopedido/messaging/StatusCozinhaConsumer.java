@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 
 import com.example.servicopedido.config.RabbitMQConfig;
 import com.example.servicopedido.entity.StatusPedido;
+import com.example.servicopedido.exception.NaoEncontradoException;
+import com.example.servicopedido.exception.RegraDeNegocioException;
 import com.example.servicopedido.messaging.dto.StatusCozinhaMessage;
 import com.example.servicopedido.service.AtualizarStatusCozinhaService;
 
@@ -30,9 +32,9 @@ public class StatusCozinhaConsumer {
             StatusPedido status = StatusPedido.valueOf(mensagem.status().trim().toUpperCase());
             atualizarStatusCozinha.atualizar(mensagem.pedidoId(), status);
             log.info("COZINHA -> pedido #{} agora esta {}", mensagem.pedidoId(), status);
-        } catch (RuntimeException e) {
-            // mensagem invalida ou transicao nao permitida: registra e descarta
-            // (reenviar a mesma mensagem nao resolveria)
+        } catch (IllegalArgumentException | NaoEncontradoException | RegraDeNegocioException e) {
+            // mensagem invalida ou transicao nao permitida: registra e descarta.
+            // Qualquer outro erro tecnico (ex: falha no banco) sobe para acionar o retry do RabbitMQ.
             log.warn("Mensagem da cozinha ignorada ({}): {}", mensagem, e.getMessage());
         }
     }
