@@ -18,7 +18,7 @@ export async function request(path, method = 'GET', body, extraHeaders = {}) {
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw Error('Gateway fora do ar. Confira o HOST em src/config.js e se ele está rodando na porta 8080.');
+    throw Error(`Gateway fora do ar (${API_URL}). Se estiver no Render, aguarde alguns segundos para o servidor acordar e tente novamente.`);
   }
   const t = await r.text();
   let j = null;
