@@ -41,6 +41,8 @@ spring:
                 - Path=/cozinha/**
 
 app:
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:8081,http://localhost:3000,http://localhost:4200,http://localhost:5173,https://burgerdonalds-front.vercel.app}
   jwt:
     # mesmo segredo do servicoLogin (ele emite o token, o gateway valida)
     secret: ${JWT_SECRET:G7vQ2mX9kL4pN8sR1dF6wT3yH0cJ5zA8uE2bV7nM9qS4xK6rP1tW8yD3fL0gC5}
