@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { setAoExpirar } from '../services/api';
+import { setAoExpirar, novaSessao } from '../services/api';
 import * as authService from '../services/authService';
 import { useToast } from './ToastContext';
 
@@ -21,8 +21,12 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  // login: assim que o POST /auth/login responde com sucesso, o usuário entra no estado na hora
+  // (nada de F5). novaSessao() invalida 401s de requisições que começaram antes do login.
   const entrar = async (email, senha) => {
     const r = await authService.login(email, senha);
+    if (!r?.nome) throw Error('Resposta de login inválida. Tente novamente.');
+    novaSessao();
     setUser({ nome: r.nome, perfil: r.perfil });
     setLoginAberto(false);
     say('Bem-vindo, ' + r.nome.split(' ')[0] + '!');
