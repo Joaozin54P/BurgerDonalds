@@ -23,7 +23,7 @@ export default function Logo({ size = 38, texto = true, fundo = 'escuro' }) {
             Burger<Text style={{ color: C.orange }}>Donalds</Text>
           </Text>
           <Text style={{ fontSize: 8.5 * u, fontWeight: '700', letterSpacing: 1.6, color: fundo === 'escuro' ? '#A29D8D' : C.mute, marginTop: 1 }}>
-            FEITO NA CHAPA
+            FEITO NA HORA, SÓ PRA VOCÊ
           </Text>
         </View>
       )}
